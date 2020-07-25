@@ -300,12 +300,12 @@ def _IsTreeClean():
 def _CreateRollBranch(dry_run):
   current_branch = _RunCommand(
       ['git', 'rev-parse', '--abbrev-ref', 'HEAD'])[0].splitlines()[0]
-  if current_branch != 'master':
-    logging.error('Please checkout the master branch and re-run this script.')
+  if current_branch != 'main':
+    logging.error('Please checkout the main branch and re-run this script.')
     if not dry_run:
       sys.exit(-1)
 
-  logging.info('Updating master branch...')
+  logging.info('Updating main branch...')
   if not dry_run:
     _RunCommand(['git', 'pull'])
   logging.info('Creating roll branch: %s', ROLL_BRANCH_NAME)
@@ -316,7 +316,7 @@ def _CreateRollBranch(dry_run):
 def _RemovePreviousRollBranch(dry_run):
   active_branch, branches = _GetBranches()
   if active_branch == ROLL_BRANCH_NAME:
-    active_branch = 'master'
+    active_branch = 'main'
   if ROLL_BRANCH_NAME in branches:
     logging.info('Removing previous roll branch (%s)', ROLL_BRANCH_NAME)
     if not dry_run:

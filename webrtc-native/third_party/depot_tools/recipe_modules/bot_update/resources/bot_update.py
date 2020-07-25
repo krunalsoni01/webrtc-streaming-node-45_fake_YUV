@@ -60,7 +60,7 @@ SCRIPTS_DIR = check_dir(
                   '..',      # recipe_modules
                   '..',      # depot_tools
                   '..',      # .recipe_deps
-                  '..',      # slave
+                  '..',      # subordinate
                   '..',      # scripts
                   '..',      # build_internal
                   '..',      # ROOT_DIR
@@ -117,7 +117,7 @@ GIT_SVN_PROJECT_MAP = {
   'webkit': {
     'svn_url': 'svn://svn.chromium.org/blink',
     'branch_map': [
-      (r'trunk', r'refs/heads/master'),
+      (r'trunk', r'refs/heads/main'),
       (r'branches/([^/]+)', r'refs/branch-heads/\1'),
     ],
   },
@@ -125,14 +125,14 @@ GIT_SVN_PROJECT_MAP = {
     'svn_url': 'https://v8.googlecode.com/svn',
     'branch_map': [
       (r'trunk', r'refs/heads/candidates'),
-      (r'branches/bleeding_edge', r'refs/heads/master'),
+      (r'branches/bleeding_edge', r'refs/heads/main'),
       (r'branches/([^/]+)', r'refs/branch-heads/\1'),
     ],
   },
   'nacl': {
     'svn_url': 'svn://svn.chromium.org/native_client',
     'branch_map': [
-      (r'trunk/src/native_client', r'refs/heads/master'),
+      (r'trunk/src/native_client', r'refs/heads/main'),
     ],
   },
 }
@@ -168,7 +168,7 @@ GOT_REVISION_MAPPINGS = {
 
 BOT_UPDATE_MESSAGE = """
 Bot Update Debugging information:
-(master/builder/slave may be unspecified on recipes)
+(main/builder/subordinate may be unspecified on recipes)
 CURRENT_DIR: %(CURRENT_DIR)s
 BUILDER_DIR: %(BUILDER_DIR)s
 SLAVE_DIR: %(SLAVE_DIR)s
@@ -583,7 +583,7 @@ def get_commit_message_footer(message, key):
 def get_git_hash(revision, branch, sln_dir):
   """We want to search for the SVN revision on the git-svn branch.
 
-  Note that git will search backwards from origin/master.
+  Note that git will search backwards from origin/main.
   """
   match = "^%s: [^ ]*@%s " % (GIT_SVN_ID_FOOTER_KEY, revision)
   ref = branch if branch.startswith('refs/') else 'origin/%s' % branch
@@ -643,7 +643,7 @@ def get_target_revision(folder_name, git_url, revisions):
 
 def force_revision(folder_name, revision):
   split_revision = revision.split(':', 1)
-  branch = 'master'
+  branch = 'main'
   if len(split_revision) == 2:
     # Support for "branch:revision" syntax.
     branch, revision = split_revision
@@ -919,7 +919,7 @@ def get_commit_position(git_path, revision='HEAD'):
 
   If the 'git-svn' URL maps to a known project, we will construct a commit
   position branch value by truncating the URL, mapping 'trunk' to
-  "refs/heads/master". Otherwise, we will return the generic branch, 'svn'.
+  "refs/heads/main". Otherwise, we will return the generic branch, 'svn'.
   """
   git_log = git('log', '--format=%B', '-n1', revision, cwd=git_path)
   footer_map = get_commit_message_footer_map(git_log)
@@ -1351,7 +1351,7 @@ def checkout(options, git_slns, specs, buildspec,
     emit_properties(got_revisions)
 
 
-def print_help_text(master, builder, slave):
+def print_help_text(main, builder, subordinate):
   """Print helpful messages to tell devs whats going on."""
   print BOT_UPDATE_MESSAGE % {
     'CURRENT_DIR': CURRENT_DIR,
@@ -1369,11 +1369,11 @@ def main():
   # Get inputs.
   options, _ = parse_args()
   builder = options.builder_name
-  slave = options.slave_name
-  master = options.master
+  subordinate = options.subordinate_name
+  main = options.main
 
   # Prints some debugging information.
-  print_help_text(master, builder, slave)
+  print_help_text(main, builder, subordinate)
 
   # Parse, munipulate, and print the gclient solutions.
   specs = {}

@@ -90,8 +90,8 @@ TEST_CONFIG = """\
     'private': ['gyp', 'fake_feature1'],
     'unsupported': ['gn', 'fake_feature2'],
   },
-  'masters': {
-    'fake_master': {
+  'mains': {
+    'fake_main': {
       'fake_builder': 'gyp_rel_bot',
       'fake_gn_builder': 'gn_rel_bot',
     },

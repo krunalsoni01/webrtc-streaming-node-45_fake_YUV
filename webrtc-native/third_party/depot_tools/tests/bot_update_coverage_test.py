@@ -175,7 +175,7 @@ class EnsureCheckoutUnittests(unittest.TestCase):
     setattr(bot_update, 'git', fake_git)
 
     self.old_os_cwd = os.getcwd
-    setattr(os, 'getcwd', lambda: '/b/build/slave/foo/build')
+    setattr(os, 'getcwd', lambda: '/b/build/subordinate/foo/build')
 
     setattr(bot_update, 'open', self.filesystem.open)
     self.old_codecs_open = codecs.open

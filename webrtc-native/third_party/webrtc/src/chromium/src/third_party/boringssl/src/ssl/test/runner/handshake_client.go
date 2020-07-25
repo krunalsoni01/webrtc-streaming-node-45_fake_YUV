@@ -26,7 +26,7 @@ type clientHandshakeState struct {
 	hello         *clientHelloMsg
 	suite         *cipherSuite
 	finishedHash  finishedHash
-	masterSecret  []byte
+	mainSecret  []byte
 	session       *ClientSessionState
 	finishedBytes []byte
 }
@@ -70,17 +70,17 @@ func (c *Conn) clientHandshake() error {
 		duplicateExtension:      c.config.Bugs.DuplicateExtension,
 		channelIDSupported:      c.config.ChannelID != nil,
 		npnLast:                 c.config.Bugs.SwapNPNAndALPN,
-		extendedMasterSecret:    c.config.maxVersion() >= VersionTLS10,
+		extendedMainSecret:    c.config.maxVersion() >= VersionTLS10,
 		srtpProtectionProfiles:  c.config.SRTPProtectionProfiles,
-		srtpMasterKeyIdentifier: c.config.Bugs.SRTPMasterKeyIdentifer,
+		srtpMainKeyIdentifier: c.config.Bugs.SRTPMainKeyIdentifer,
 	}
 
 	if c.config.Bugs.SendClientVersion != 0 {
 		hello.vers = c.config.Bugs.SendClientVersion
 	}
 
-	if c.config.Bugs.NoExtendedMasterSecret {
-		hello.extendedMasterSecret = false
+	if c.config.Bugs.NoExtendedMainSecret {
+		hello.extendedMainSecret = false
 	}
 
 	if c.config.Bugs.NoSupportedCurves {
@@ -355,7 +355,7 @@ NextCipherSuite:
 	c.cipherSuite = suite
 	copy(c.clientRandom[:], hs.hello.random)
 	copy(c.serverRandom[:], hs.serverHello.random)
-	copy(c.masterSecret[:], hs.masterSecret)
+	copy(c.mainSecret[:], hs.mainSecret)
 	return nil
 }
 
@@ -555,7 +555,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 		c.writeRecord(recordTypeHandshake, certMsg.marshal())
 	}
 
-	preMasterSecret, ckx, err := keyAgreement.generateClientKeyExchange(c.config, hs.hello, leaf)
+	preMainSecret, ckx, err := keyAgreement.generateClientKeyExchange(c.config, hs.hello, leaf)
 	if err != nil {
 		c.sendAlert(alertInternalError)
 		return err
@@ -567,14 +567,14 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 		c.writeRecord(recordTypeHandshake, ckx.marshal())
 	}
 
-	if hs.serverHello.extendedMasterSecret && c.vers >= VersionTLS10 {
-		hs.masterSecret = extendedMasterFromPreMasterSecret(c.vers, hs.suite, preMasterSecret, hs.finishedHash)
-		c.extendedMasterSecret = true
+	if hs.serverHello.extendedMainSecret && c.vers >= VersionTLS10 {
+		hs.mainSecret = extendedMainFromPreMainSecret(c.vers, hs.suite, preMainSecret, hs.finishedHash)
+		c.extendedMainSecret = true
 	} else {
-		if c.config.Bugs.RequireExtendedMasterSecret {
-			return errors.New("tls: extended master secret required but not supported by peer")
+		if c.config.Bugs.RequireExtendedMainSecret {
+			return errors.New("tls: extended main secret required but not supported by peer")
 		}
-		hs.masterSecret = masterFromPreMasterSecret(c.vers, hs.suite, preMasterSecret, hs.hello.random, hs.serverHello.random)
+		hs.mainSecret = mainFromPreMainSecret(c.vers, hs.suite, preMainSecret, hs.hello.random, hs.serverHello.random)
 	}
 
 	if chainToSend != nil {
@@ -602,7 +602,7 @@ func (hs *clientHandshakeState) doFullHandshake() error {
 			c.sendAlert(alertInternalError)
 			return err
 		}
-		digest, hashFunc, err := hs.finishedHash.hashForClientCertificate(certVerify.signatureAndHash, hs.masterSecret)
+		digest, hashFunc, err := hs.finishedHash.hashForClientCertificate(certVerify.signatureAndHash, hs.mainSecret)
 		if err != nil {
 			c.sendAlert(alertInternalError)
 			return err
@@ -640,7 +640,7 @@ func (hs *clientHandshakeState) establishKeys() error {
 	c := hs.c
 
 	clientMAC, serverMAC, clientKey, serverKey, clientIV, serverIV :=
-		keysFromMasterSecret(c.vers, hs.suite, hs.masterSecret, hs.hello.random, hs.serverHello.random, hs.suite.macLen, hs.suite.keyLen, hs.suite.ivLen)
+		keysFromMainSecret(c.vers, hs.suite, hs.mainSecret, hs.hello.random, hs.serverHello.random, hs.suite.macLen, hs.suite.keyLen, hs.suite.ivLen)
 	var clientCipher, serverCipher interface{}
 	var clientHash, serverHash macFunction
 	if hs.suite.cipher != nil {
@@ -705,7 +705,7 @@ func (hs *clientHandshakeState) processServerHello() (bool, error) {
 	}
 
 	if hs.serverHello.srtpProtectionProfile != 0 {
-		if hs.serverHello.srtpMasterKeyIdentifier != "" {
+		if hs.serverHello.srtpMainKeyIdentifier != "" {
 			return false, errors.New("tls: server selected SRTP MKI value")
 		}
 
@@ -730,10 +730,10 @@ func (hs *clientHandshakeState) processServerHello() (bool, error) {
 			return false, errors.New("tls: server resumed session on renegotiation")
 		}
 
-		// Restore masterSecret and peerCerts from previous state
-		hs.masterSecret = hs.session.masterSecret
+		// Restore mainSecret and peerCerts from previous state
+		hs.mainSecret = hs.session.mainSecret
 		c.peerCertificates = hs.session.serverCertificates
-		c.extendedMasterSecret = hs.session.extendedMasterSecret
+		c.extendedMainSecret = hs.session.extendedMainSecret
 		hs.finishedHash.discardHandshakeBuffer()
 		return true, nil
 	}
@@ -759,7 +759,7 @@ func (hs *clientHandshakeState) readFinished(out []byte) error {
 	}
 
 	if c.config.Bugs.EarlyChangeCipherSpec == 0 {
-		verify := hs.finishedHash.serverSum(hs.masterSecret)
+		verify := hs.finishedHash.serverSum(hs.mainSecret)
 		if len(verify) != len(serverFinished.verifyData) ||
 			subtle.ConstantTimeCompare(verify, serverFinished.verifyData) != 1 {
 			c.sendAlert(alertHandshakeFailure)
@@ -780,7 +780,7 @@ func (hs *clientHandshakeState) readSessionTicket() error {
 	session := &ClientSessionState{
 		vers:               c.vers,
 		cipherSuite:        hs.suite.id,
-		masterSecret:       hs.masterSecret,
+		mainSecret:       hs.mainSecret,
 		handshakeHash:      hs.finishedHash.server.Sum(nil),
 		serverCertificates: c.peerCertificates,
 	}
@@ -864,7 +864,7 @@ func (hs *clientHandshakeState) sendFinished(out []byte, isResume bool) error {
 	if c.config.Bugs.EarlyChangeCipherSpec == 2 {
 		finished.verifyData = hs.finishedHash.clientSum(nil)
 	} else {
-		finished.verifyData = hs.finishedHash.clientSum(hs.masterSecret)
+		finished.verifyData = hs.finishedHash.clientSum(hs.mainSecret)
 	}
 	copy(out, finished.verifyData)
 	if c.config.Bugs.BadFinished {

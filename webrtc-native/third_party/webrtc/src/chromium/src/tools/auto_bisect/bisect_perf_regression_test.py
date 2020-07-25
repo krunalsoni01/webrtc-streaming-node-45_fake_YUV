@@ -633,7 +633,7 @@ class GitTryJobTestCases(unittest.TestCase):
                                  bisect_perf_regression._PrepareBisectBranch,
                                  parent_branch, new_branch)
 
-  def testFailedCheckoutMaster(self):
+  def testFailedCheckoutMain(self):
     new_branch = bisect_perf_regression.BISECT_TRYJOB_BRANCH
     parent_branch = bisect_perf_regression.BISECT_MASTER_BRANCH
     cmds = [
@@ -649,7 +649,7 @@ class GitTryJobTestCases(unittest.TestCase):
     parent_branch = bisect_perf_regression.BISECT_MASTER_BRANCH
     cmds = [
         (['rev-parse', '--abbrev-ref', 'HEAD'], (parent_branch, 0)),
-        (['branch', '--list'], ('bisect-tryjob\n*master\nsomebranch', 0)),
+        (['branch', '--list'], ('bisect-tryjob\n*main\nsomebranch', 0)),
         (['branch', '-D', new_branch], ('Failed to delete branch', 128)),
     ]
     self._AssertRunGitExceptions(cmds,
@@ -661,7 +661,7 @@ class GitTryJobTestCases(unittest.TestCase):
     parent_branch = bisect_perf_regression.BISECT_MASTER_BRANCH
     cmds = [
         (['rev-parse', '--abbrev-ref', 'HEAD'], (parent_branch, 0)),
-        (['branch', '--list'], ('bisect-tryjob\n*master\nsomebranch', 0)),
+        (['branch', '--list'], ('bisect-tryjob\n*main\nsomebranch', 0)),
         (['branch', '-D', new_branch], ('None', 0)),
         (['update-index', '--refresh', '-q'], (None, 0)),
         (['diff-index', 'HEAD'], (None, 0)),
@@ -676,7 +676,7 @@ class GitTryJobTestCases(unittest.TestCase):
     parent_branch = bisect_perf_regression.BISECT_MASTER_BRANCH
     cmds = [
         (['rev-parse', '--abbrev-ref', 'HEAD'], (parent_branch, 0)),
-        (['branch', '--list'], ('bisect-tryjob\n*master\nsomebranch', 0)),
+        (['branch', '--list'], ('bisect-tryjob\n*main\nsomebranch', 0)),
         (['branch', '-D', new_branch], ('None', 0)),
         (['update-index', '--refresh', '-q'], (None, 0)),
         (['diff-index', 'HEAD'], (None, 0)),
@@ -698,7 +698,7 @@ class GitTryJobTestCases(unittest.TestCase):
     parent_branch = bisect_perf_regression.BISECT_MASTER_BRANCH
     try_cmd = [
         (['rev-parse', '--abbrev-ref', 'HEAD'], (parent_branch, 0)),
-        (['branch', '--list'], ('bisect-tryjob\n*master\nsomebranch', 0)),
+        (['branch', '--list'], ('bisect-tryjob\n*main\nsomebranch', 0)),
         (['branch', '-D', new_branch], ('None', 0)),
         (['update-index', '--refresh', '-q'], (None, 0)),
         (['diff-index', 'HEAD'], (None, 0)),
@@ -728,7 +728,7 @@ class GitTryJobTestCases(unittest.TestCase):
     parent_branch = bisect_perf_regression.BISECT_MASTER_BRANCH
     try_cmd = [
         (['rev-parse', '--abbrev-ref', 'HEAD'], (parent_branch, 0)),
-        (['branch', '--list'], ('bisect-tryjob\n*master\nsomebranch', 0)),
+        (['branch', '--list'], ('bisect-tryjob\n*main\nsomebranch', 0)),
         (['branch', '-D', new_branch], ('None', 0)),
         (['update-index', '--refresh', '-q'], (None, 0)),
         (['diff-index', 'HEAD'], (None, 0)),

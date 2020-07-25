@@ -427,8 +427,8 @@ class Fault:
     badVerifyMessage = 601
     clientCertFaults = list(range(601,602))
 
-    badPremasterPadding = 501
-    shortPremasterSecret = 502
+    badPremainPadding = 501
+    shortPremainSecret = 502
     clientNoAuthFaults = list(range(501,503))
 
     badB = 201
@@ -444,8 +444,8 @@ class Fault:
                       AlertDescription.bad_record_mac),\
         badPassword: (AlertDescription.bad_record_mac,),\
         badA: (AlertDescription.illegal_parameter,),\
-        badPremasterPadding: (AlertDescription.bad_record_mac,),\
-        shortPremasterSecret: (AlertDescription.bad_record_mac,),\
+        badPremainPadding: (AlertDescription.bad_record_mac,),\
+        shortPremainSecret: (AlertDescription.bad_record_mac,),\
         badVerifyMessage: (AlertDescription.decrypt_error,),\
         badFinished: (AlertDescription.decrypt_error,),\
         badMAC: (AlertDescription.bad_record_mac,),\
@@ -456,8 +456,8 @@ class Fault:
         badUsername: "bad username",\
         badPassword: "bad password",\
         badA: "bad A",\
-        badPremasterPadding: "bad premaster padding",\
-        shortPremasterSecret: "short premaster secret",\
+        badPremainPadding: "bad premain padding",\
+        shortPremainSecret: "short premain secret",\
         badVerifyMessage: "bad verify message",\
         badFinished: "bad finished message",\
         badMAC: "bad MAC",\

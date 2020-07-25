@@ -4,7 +4,7 @@
 # can be found in the LICENSE file.
 
 """Runs hello_world.py, through hello_world.isolate, remotely on a Swarming
-slave.
+subordinate.
 
 It first 'compiles' hello_world.isolate into hello_word.isolated, then requests
 via swarming.py to archives, run and collect results for this task.
