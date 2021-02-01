@@ -67,19 +67,19 @@ def PRF_SSL(secret, seed, length):
             index += 1
     return bytes
 
-def calcMasterSecret(version, premasterSecret, clientRandom, serverRandom):
+def calcMainSecret(version, premainSecret, clientRandom, serverRandom):
     if version == (3,0):
-        masterSecret = PRF_SSL(premasterSecret,
+        mainSecret = PRF_SSL(premainSecret,
                             clientRandom + serverRandom, 48)
     elif version in ((3,1), (3,2)):
-        masterSecret = PRF(premasterSecret, b"master secret",
+        mainSecret = PRF(premainSecret, b"main secret",
                             clientRandom + serverRandom, 48)
     elif version == (3,3):
-        masterSecret = PRF_1_2(premasterSecret, b"master secret",
+        mainSecret = PRF_1_2(premainSecret, b"main secret",
                             clientRandom + serverRandom, 48)
     else:
         raise AssertionError()
-    return masterSecret
+    return mainSecret
 
 
 def makeX(salt, username, password):

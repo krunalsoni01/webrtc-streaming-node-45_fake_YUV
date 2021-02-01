@@ -16,7 +16,7 @@ achieve this.
 
 It's a modified copy of the similar script that lives in WebRTC.
 It also handles cleanup of the legacy Subversion-based approach that was used
-before Chrome switched over their master repo from Subversion to Git.
+before Chrome switched over their main repo from Subversion to Git.
 """
 
 

@@ -362,8 +362,8 @@ def main():
     from_address = 'buildbot@chromium.org'
     to_addresses = ['chromium-android-device-alerts@google.com']
     bot_name = os.environ.get('BUILDBOT_BUILDERNAME')
-    slave_name = os.environ.get('BUILDBOT_SLAVENAME')
-    subject = 'Device status check errors on %s, %s.' % (slave_name, bot_name)
+    subordinate_name = os.environ.get('BUILDBOT_SLAVENAME')
+    subject = 'Device status check errors on %s, %s.' % (subordinate_name, bot_name)
     SendEmail(from_address, to_addresses, [], subject, '\n'.join(err_msg))
 
   if options.device_status_dashboard:

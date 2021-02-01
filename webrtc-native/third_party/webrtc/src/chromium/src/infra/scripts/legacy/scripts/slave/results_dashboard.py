@@ -13,11 +13,11 @@ import os
 import urllib
 import urllib2
 
-from slave import slave_utils
+from subordinate import subordinate_utils
 
 # The paths in the results dashboard URLs for sending and viewing results.
 SEND_RESULTS_PATH = '/add_point'
-RESULTS_LINK_PATH = '/report?masters=%s&bots=%s&tests=%s&rev=%s'
+RESULTS_LINK_PATH = '/report?mains=%s&bots=%s&tests=%s&rev=%s'
 
 # CACHE_DIR/CACHE_FILENAME will be created in options.build_dir to cache
 # results which need to be retried.
@@ -152,7 +152,7 @@ def _CanParseJSON(my_json):
   return True
 
 
-def MakeListOfPoints(charts, bot, test_name, mastername, buildername,
+def MakeListOfPoints(charts, bot, test_name, mainname, buildername,
                      buildnumber, supplemental_columns):
   """Constructs a list of point dictionaries to send.
 
@@ -164,21 +164,21 @@ def MakeListOfPoints(charts, bot, test_name, mastername, buildername,
         log processor classes (see process_log_utils.GraphingLogProcessor).
     bot: A string which comes from perf_id, e.g. linux-release.
     test_name: A test suite name, e.g. sunspider.
-    mastername: Buildbot master name, e.g. chromium.perf.
+    mainname: Buildbot main name, e.g. chromium.perf.
     buildername: Builder name (for stdio links).
     buildnumber: Build number (for stdio links).
     supplemental_columns: A dictionary of extra data to send with a point.
 
   Returns:
     A list of dictionaries in the format accepted by the perf dashboard.
-    Each dictionary has the keys "master", "bot", "test", "value", "revision".
+    Each dictionary has the keys "main", "bot", "test", "value", "revision".
     The full details of this format are described at http://goo.gl/TcJliv.
   """
   results = []
 
-  # The master name used for the dashboard is the CamelCase name returned by
-  # GetActiveMaster(), and not the canonical master name with dots.
-  master = slave_utils.GetActiveMaster()
+  # The main name used for the dashboard is the CamelCase name returned by
+  # GetActiveMain(), and not the canonical main name with dots.
+  main = subordinate_utils.GetActiveMain()
 
   for chart_name, chart_data in sorted(charts.items()):
     point_id, revision_columns = _RevisionNumberColumns(chart_data, prefix='r_')
@@ -187,11 +187,11 @@ def MakeListOfPoints(charts, bot, test_name, mastername, buildername,
       is_important = trace_name in chart_data.get('important', [])
       test_path = _TestPath(test_name, chart_name, trace_name)
       result = {
-          'master': master,
+          'main': main,
           'bot': bot,
           'test': test_path,
           'revision': point_id,
-          'masterid': mastername,
+          'mainid': mainname,
           'buildername': buildername,
           'buildnumber': buildnumber,
           'supplemental_columns': {}
@@ -216,7 +216,7 @@ def MakeListOfPoints(charts, bot, test_name, mastername, buildername,
   return results
 
 
-def MakeDashboardJsonV1(chart_json, revision_data, bot, mastername,
+def MakeDashboardJsonV1(chart_json, revision_data, bot, mainname,
                         buildername, buildnumber, supplemental_dict, is_ref):
   """Generates Dashboard JSON in the new Telemetry format.
 
@@ -226,7 +226,7 @@ def MakeDashboardJsonV1(chart_json, revision_data, bot, mastername,
     chart_json: A dict containing the telmetry output.
     revision_data: Data about revisions to include in the upload.
     bot: A string which comes from perf_id, e.g. linux-release.
-    mastername: Buildbot master name, e.g. chromium.perf.
+    mainname: Buildbot main name, e.g. chromium.perf.
     buildername: Builder name (for stdio links).
     buildnumber: Build number (for stdio links).
     supplemental_columns: A dictionary of extra data to send with a point.
@@ -238,17 +238,17 @@ def MakeDashboardJsonV1(chart_json, revision_data, bot, mastername,
   if not chart_json:
     print 'Error: No json output from telemetry.'
     print '@@@STEP_FAILURE@@@'
-  # The master name used for the dashboard is the CamelCase name returned by
-  # GetActiveMaster(), and not the canonical master name with dots.
-  master = slave_utils.GetActiveMaster()
+  # The main name used for the dashboard is the CamelCase name returned by
+  # GetActiveMain(), and not the canonical main name with dots.
+  main = subordinate_utils.GetActiveMain()
   point_id, revision_columns = _RevisionNumberColumns(revision_data, prefix='')
   supplemental_columns = {}
   for key in supplemental_dict:
     supplemental_columns[key.replace('a_', '', 1)] = supplemental_dict[key]
   fields = {
-      'master': master,
+      'main': main,
       'bot': bot,
-      'masterid': mastername,
+      'mainid': mainname,
       'buildername': buildername,
       'buildnumber': buildnumber,
       'point_id': point_id,
@@ -270,7 +270,7 @@ def _RevisionNumberColumns(data, prefix):
 
   Args:
     data: A dict of information from one line of the log file.
-    master: The name of the buildbot master.
+    main: The name of the buildbot main.
     prefix: Prefix for revision type keys. 'r_' for non-telemetry json, '' for
         telemetry json.
 
@@ -319,10 +319,10 @@ def _TestPath(test_name, chart_name, trace_name):
 
   Returns:
     A slash-separated list of names that corresponds to the hierarchy of test
-    data in the Chrome Performance Dashboard; doesn't include master or bot
+    data in the Chrome Performance Dashboard; doesn't include main or bot
     name.
   """
-  # For tests run on reference builds by builds/scripts/slave/telemetry.py,
+  # For tests run on reference builds by builds/scripts/subordinate/telemetry.py,
   # "_ref" is appended to the trace name. On the dashboard, as long as the
   # result is on the right chart, it can just be called "ref".
   if trace_name == chart_name + '_ref':
@@ -381,13 +381,13 @@ def _LinkAnnotation(url, data):
   if not data:
     return None
   if isinstance(data, list):
-    master, bot, test, revision = (
-        data[0]['master'], data[0]['bot'], data[0]['test'], data[0]['revision'])
+    main, bot, test, revision = (
+        data[0]['main'], data[0]['bot'], data[0]['test'], data[0]['revision'])
   else:
-    master, bot, test, revision = (
-        data['master'], data['bot'], data['chart_data']['benchmark_name'],
+    main, bot, test, revision = (
+        data['main'], data['bot'], data['chart_data']['benchmark_name'],
         data['point_id'])
   results_link = url + RESULTS_LINK_PATH % (
-      urllib.quote(master), urllib.quote(bot), urllib.quote(test.split('/')[0]),
+      urllib.quote(main), urllib.quote(bot), urllib.quote(test.split('/')[0]),
       revision)
   return '@@@STEP_LINK@%s@%s@@@' % ('Results Dashboard', results_link)
